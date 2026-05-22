@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="集金カウンター">
+<title>集金カウンター</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#fff;--bg2:#f5f5f4;--bg3:#eeede9;
+  --text:#1a1a18;--text2:#6b6b67;--text3:#a0a09c;
+  --border:rgba(0,0,0,0.12);--border2:rgba(0,0,0,0.22);
+  --r-md:8px;--r-lg:12px;
+}
+@media(prefers-color-scheme:dark){:root{
+  --bg:#1c1c1a;--bg2:#252523;--bg3:#2e2e2b;
+  --text:#f0efe9;--text2:#9e9e99;--text3:#6a6a66;
+  --border:rgba(255,255,255,0.1);--border2:rgba(255,255,255,0.2);
+}}
+body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Noto Sans JP',sans-serif;background:var(--bg3);color:var(--text);min-height:100vh;padding-bottom:50px}
+header{background:var(--bg);border-bottom:.5px solid var(--border);padding:13px 16px;position:sticky;top:0;z-index:30;display:flex;align-items:center;justify-content:space-between}
+header h1{font-size:16px;font-weight:700}
+.hbtn{background:none;border:.5px solid var(--border2);border-radius:var(--r-md);padding:6px 11px;font-size:13px;font-weight:600;color:var(--text);cursor:pointer;-webkit-tap-highlight-color:transparent}
+.hbtn:active{opacity:.6}
+.tab-bar{display:flex;background:var(--bg);border-bottom:.5px solid var(--border);position:sticky;top:48px;z-index:29}
+.tab-item{flex:1;padding:11px 4px;font-size:14px;font-weight:600;text-align:center;color:var(--text3);cursor:pointer;border-bottom:2.5px solid transparent;white-space:nowrap;-webkit-tap-highlight-color:transparent;transition:color .12s,border-color .12s}
+.tab-item.active{color:var(--text);border-bottom-color:var(--text)}
+.page{display:none}.page.active{display:block}
+.container{max-width:480px;margin:0 auto;padding:14px}
+.sec-label{font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--text3);margin:18px 0 8px}
+.group-list{display:flex;flex-direction:column;gap:7px}
+.group-row{background:var(--bg);border:.5px solid var(--border);border-radius:var(--r-lg);padding:13px 15px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background .1s}
+.group-row:active{background:var(--bg2)}
+.group-row.done{border-color:rgba(29,158,117,.4)}
+.grow-left{display:flex;align-items:center;gap:10px}
+.gnum{width:34px;height:34px;border-radius:50%;background:var(--bg2);border:.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0}
+.group-row.done .gnum{background:#E1F5EE;border-color:rgba(29,158,117,.3);color:#085041}
+.gname{font-size:16px;font-weight:600}
+.gmeta{font-size:12px;color:var(--text3);margin-top:1px}
+.grow-right{display:flex;align-items:center;gap:8px}
+.gamount{font-size:16px;font-weight:700;color:var(--text2)}
+.group-row.done .gamount{color:var(--text)}
+.garrow{font-size:18px;color:var(--text3)}
+.total-card{background:var(--bg2);border-radius:var(--r-lg);padding:16px 18px;margin-top:0;margin-bottom:16px;display:flex;align-items:baseline;justify-content:space-between}
+.total-label{font-size:14px;color:var(--text2)}
+.total-amt{font-size:34px;font-weight:700;letter-spacing:-.03em}
+/* input screen */
+.input-screen{display:none;position:fixed;inset:0;background:var(--bg3);z-index:50;overflow-y:auto;padding-bottom:40px}
+.input-screen.open{display:block}
+.input-header{background:var(--bg);border-bottom:.5px solid var(--border);padding:13px 16px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:51}
+.back-btn{background:none;border:none;font-size:24px;color:var(--text);cursor:pointer;padding:0 4px;line-height:1;-webkit-tap-highlight-color:transparent}
+.input-title{font-size:16px;font-weight:700;flex:1}
+.input-subtitle{font-size:13px;color:var(--text3)}
+.save-btn{background:var(--text);color:var(--bg);border:none;border-radius:var(--r-md);padding:8px 16px;font-size:14px;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.save-btn:active{opacity:.7}
+.icont{max-width:480px;margin:0 auto;padding:14px}
+.denom-row{display:flex;align-items:center;background:var(--bg);border:.5px solid var(--border);border-radius:var(--r-md);padding:11px 13px;margin-bottom:7px;gap:10px}
+.dicon{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+.dicon.bill{border-radius:5px}
+.dlabel{flex:1;font-size:16px;font-weight:600}
+.dsub{font-size:15px;font-weight:500;color:var(--text2);min-width:70px;text-align:right}
+.qty-ctrl{display:flex;align-items:center;gap:5px}
+.qbtn{width:34px;height:34px;border-radius:50%;border:.5px solid var(--border2);background:var(--bg2);color:var(--text);font-size:20px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;user-select:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.qbtn:active{transform:scale(.88);background:var(--bg3)}
+.qinp{width:44px;text-align:center;font-size:17px;font-weight:700;border:none;background:transparent;color:var(--text);-moz-appearance:textfield}
+.qinp::-webkit-inner-spin-button,.qinp::-webkit-outer-spin-button{-webkit-appearance:none}
+.input-total-card{background:var(--bg2);border-radius:var(--r-lg);padding:16px 18px;margin-top:18px;display:flex;align-items:baseline;justify-content:space-between}
+.reset-input-btn{width:100%;padding:13px;border-radius:var(--r-lg);border:.5px solid var(--border2);background:var(--bg);color:var(--text2);font-size:14px;font-weight:600;cursor:pointer;margin-top:10px;-webkit-tap-highlight-color:transparent}
+.reset-input-btn:active{opacity:.6}
+/* settings */
+.settings-screen{display:none;position:fixed;inset:0;background:var(--bg3);z-index:50;overflow-y:auto;padding-bottom:40px}
+.settings-screen.open{display:block}
+.settings-header{background:var(--bg);border-bottom:.5px solid var(--border);padding:13px 16px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:51}
+.scont{max-width:480px;margin:0 auto;padding:14px}
+.sfield{margin-bottom:7px}
+.sfield label{font-size:12px;color:var(--text3);display:block;margin-bottom:3px;padding-left:2px}
+.sinp{width:100%;height:42px;font-size:15px;padding:0 12px;border-radius:var(--r-md);border:.5px solid var(--border2);background:var(--bg);color:var(--text);outline:none;-webkit-appearance:none}
+.sinp:focus{border-color:#378ADD;box-shadow:0 0 0 3px rgba(55,138,221,.15)}
+.save-settings-btn{width:100%;padding:14px;border-radius:var(--r-lg);border:none;background:var(--text);color:var(--bg);font-size:15px;font-weight:700;cursor:pointer;margin-top:8px;-webkit-tap-highlight-color:transparent}
+.save-settings-btn:active{opacity:.7}
+.danger-zone{margin-top:36px;padding-top:20px;border-top:.5px solid rgba(200,50,50,.3)}
+.danger-label{font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:#C04040;margin-bottom:10px}
+.danger-btn{width:100%;padding:13px;border-radius:var(--r-lg);border:1.5px solid rgba(200,50,50,.4);background:transparent;color:#C04040;font-size:14px;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.danger-btn:active{background:rgba(200,50,50,.08)}
+/* toast */
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(16px);background:var(--text);color:var(--bg);padding:10px 20px;border-radius:100px;font-size:14px;font-weight:500;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;white-space:nowrap;z-index:999}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>集金カウンター</h1>
+  <button class="hbtn" onclick="openSettings()">設定</button>
+</header>
+
+<div class="tab-bar" id="tab-bar"></div>
+<div id="pages"></div>
+
+<!-- Input Screen -->
+<div class="input-screen" id="input-screen">
+  <div class="input-header">
+    <button class="back-btn" onclick="closeInput()">&#8249;</button>
+    <div style="flex:1">
+      <div class="input-title" id="input-title"></div>
+      <div class="input-subtitle" id="input-subtitle"></div>
+    </div>
+    <button class="save-btn" onclick="saveEntry()">記録</button>
+  </div>
+  <div class="icont">
+    <div class="sec-label">紙幣</div>
+    <div id="denom-bills"></div>
+    <div class="sec-label">硬貨</div>
+    <div id="denom-coins"></div>
+    <div class="input-total-card">
+      <span class="total-label">合計金額</span>
+      <span class="total-amt" id="input-total">¥0</span>
+    </div>
+    <button class="reset-input-btn" onclick="resetInputCounts()">入力をリセット</button>
+  </div>
+</div>
+
+<!-- Settings Screen -->
+<div class="settings-screen" id="settings-screen">
+  <div class="settings-header">
+    <button class="back-btn" onclick="closeSettings()">&#8249;</button>
+    <span style="font-size:16px;font-weight:700">設定</span>
+  </div>
+  <div class="scont">
+    <div class="sec-label">集金項目名（3種類）</div>
+    <div id="cat-fields"></div>
+    <div class="sec-label" style="margin-top:22px">組の名前（13組）</div>
+    <div id="group-fields"></div>
+    <button class="save-settings-btn" onclick="saveSettings()">保存する</button>
+    <div class="danger-zone">
+      <div class="danger-label">危険な操作</div>
+      <button class="danger-btn" onclick="resetAllRecords()">すべての集金データを削除する</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+var DEFAULT_CATS = ['区費', '祭典費', '護持費'];
+var DEFAULT_GROUPS = ['1組', '2組', '3組', '4組', '5組', '6組', '10組', '11組', '13組', '14組', '17組', '21組', '24組'];
+var GROUP_NUMS = [1, 2, 3, 4, 5, 6, 10, 11, 13, 14, 17, 21, 24];
+var DENOMS = [
+  {v:10000, label:'10,000円', color:'#B5D4F4', text:'#0C447C', bill:true},
+  {v:5000,  label:'5,000円',  color:'#F5C4B3', text:'#712B13', bill:true},
+  {v:1000,  label:'1,000円',  color:'#9FE1CB', text:'#085041', bill:true},
+  {v:500,   label:'500円',    color:'#FAC775', text:'#633806', bill:false},
+  {v:100,   label:'100円',    color:'#D3D1C7', text:'#444441', bill:false}
+];
+
+function loadData(k, def) {
+  try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : def; } catch(e) { return def; }
+}
+function saveData(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
+
+var cats = loadData('cats', DEFAULT_CATS);
+var groups = loadData('groups', DEFAULT_GROUPS);
+var records = loadData('records', {});
+var currentTab = 0;
+var currentInput = {ci: 0, gi: 0};
+var inputCounts = {};
+
+function getRecord(ci, gi) {
+  return (records[ci] || {})[gi] || null;
+}
+function setRecord(ci, gi, data) {
+  if (!records[ci]) records[ci] = {};
+  records[ci][gi] = data;
+  saveData('records', records);
+}
+
+function buildAll() {
+  buildTabs();
+  buildPages();
+}
+
+function buildTabs() {
+  var bar = document.getElementById('tab-bar');
+  bar.innerHTML = '';
+  for (var i = 0; i < cats.length; i++) {
+    var t = document.createElement('div');
+    t.className = 'tab-item' + (i === currentTab ? ' active' : '');
+    t.textContent = cats[i];
+    t.setAttribute('data-idx', i);
+    t.onclick = (function(idx) { return function() { switchTab(idx); }; })(i);
+    bar.appendChild(t);
+  }
+}
+
+function buildPages() {
+  var pages = document.getElementById('pages');
+  pages.innerHTML = '';
+  for (var ci = 0; ci < cats.length; ci++) {
+    var page = document.createElement('div');
+    page.className = 'page' + (ci === currentTab ? ' active' : '');
+    page.id = 'page-' + ci;
+    page.innerHTML = buildPageHTML(ci);
+    pages.appendChild(page);
+  }
+}
+
+function buildPageHTML(ci) {
+  var catTotal = 0;
+  var doneCount = 0;
+  for (var gi = 0; gi < groups.length; gi++) {
+    var r = getRecord(ci, gi);
+    if (r) { catTotal += r.v; doneCount++; }
+  }
+
+  var html = '<div class="container">';
+  html += '<div class="sec-label">合計 — ' + cats[ci] + '</div>';
+  html += '<div class="total-card"><span class="total-label">' + doneCount + '/' + groups.length + '組 集金済</span><span class="total-amt">¥' + catTotal.toLocaleString() + '</span></div>';
+  html += '<div class="sec-label">組ごとの入力</div><div class="group-list">';
+
+  for (var gi = 0; gi < groups.length; gi++) {
+    var r = getRecord(ci, gi);
+    var done = !!r;
+    var amt = done ? '¥' + r.v.toLocaleString() : '未入力';
+    var detail = '';
+    if (done && r.snapshot) {
+      var parts = [];
+      var keys = Object.keys(r.snapshot);
+      for (var k = 0; k < keys.length; k++) {
+        var s = r.snapshot[keys[k]];
+        parts.push(s.label + '×' + s.count);
+      }
+      detail = parts.join(' ');
+    }
+    var meta = done ? '<div class="gmeta">' + detail + '</div>' : '<div class="gmeta">タップして入力</div>';
+    html += '<div class="group-row' + (done ? ' done' : '') + '" onclick="openInput(' + ci + ',' + gi + ')">';
+    html += '<div class="grow-left">';
+    html += '<div class="gnum">' + GROUP_NUMS[gi] + '</div>';
+    html += '<div><div class="gname">' + groups[gi] + '</div>' + meta + '</div>';
+    html += '</div>';
+    html += '<div class="grow-right"><span class="gamount">' + amt + '</span><span class="garrow">›</span></div>';
+    html += '</div>';
+  }
+  html += '</div></div>';
+  return html;
+}
+
+function switchTab(i) {
+  currentTab = i;
+  var tabs = document.querySelectorAll('.tab-item');
+  var pages = document.querySelectorAll('.page');
+  for (var j = 0; j < tabs.length; j++) tabs[j].classList.toggle('active', j === i);
+  for (var j = 0; j < pages.length; j++) pages[j].classList.toggle('active', j === i);
+}
+
+function openInput(ci, gi) {
+  currentInput = {ci: ci, gi: gi};
+  inputCounts = {};
+  for (var i = 0; i < DENOMS.length; i++) inputCounts[DENOMS[i].v] = 0;
+
+  var r = getRecord(ci, gi);
+  if (r && r.snapshot) {
+    var keys = Object.keys(r.snapshot);
+    for (var i = 0; i < keys.length; i++) {
+      inputCounts[parseInt(keys[i])] = r.snapshot[keys[i]].count;
+    }
+  }
+
+  document.getElementById('input-title').textContent = cats[ci] + ' — ' + groups[gi];
+  document.getElementById('input-subtitle').textContent = '金種を入力してください';
+  buildDenomRows();
+  updateInputTotal();
+  document.getElementById('input-screen').classList.add('open');
+  document.getElementById('input-screen').scrollTop = 0;
+}
+
+function closeInput() {
+  document.getElementById('input-screen').classList.remove('open');
+}
+
+function buildDenomRows() {
+  var bills = document.getElementById('denom-bills');
+  var coins = document.getElementById('denom-coins');
+  bills.innerHTML = '';
+  coins.innerHTML = '';
+
+  for (var i = 0; i < DENOMS.length; i++) {
+    var d = DENOMS[i];
+    var row = document.createElement('div');
+    row.className = 'denom-row';
+
+    var icon = document.createElement('div');
+    icon.className = 'dicon' + (d.bill ? ' bill' : '');
+    icon.style.background = d.color;
+    icon.style.color = d.text;
+    if (d.v === 10000) icon.textContent = '1万';
+    else if (d.v === 5000) icon.textContent = '5千';
+    else if (d.v === 1000) icon.textContent = '1千';
+    else icon.textContent = d.v;
+
+    var lbl = document.createElement('div');
+    lbl.className = 'dlabel';
+    lbl.textContent = d.label;
+
+    var sub = document.createElement('div');
+    sub.className = 'dsub';
+    sub.id = 'dsub-' + d.v;
+    sub.textContent = '¥0';
+
+    var ctrl = document.createElement('div');
+    ctrl.className = 'qty-ctrl';
+
+    var minus = document.createElement('button');
+    minus.className = 'qbtn';
+    minus.textContent = '−';
+
+    var inp = document.createElement('input');
+    inp.type = 'number';
+    inp.className = 'qinp';
+    inp.value = inputCounts[d.v];
+    inp.min = 0;
+    inp.setAttribute('inputmode', 'numeric');
+    inp.id = 'qinp-' + d.v;
+
+    var plus = document.createElement('button');
+    plus.className = 'qbtn';
+    plus.textContent = '+';
+
+    (function(dv) {
+      minus.onclick = function() { inputCounts[dv] = Math.max(0, inputCounts[dv] - 1); document.getElementById('qinp-' + dv).value = inputCounts[dv]; updateInputTotal(); };
+      plus.onclick  = function() { inputCounts[dv]++; document.getElementById('qinp-' + dv).value = inputCounts[dv]; updateInputTotal(); };
+      inp.oninput   = function() { inputCounts[dv] = Math.max(0, parseInt(this.value) || 0); this.value = inputCounts[dv]; updateInputTotal(); };
+    })(d.v);
+
+    ctrl.appendChild(minus);
+    ctrl.appendChild(inp);
+    ctrl.appendChild(plus);
+    row.appendChild(icon);
+    row.appendChild(lbl);
+    row.appendChild(sub);
+    row.appendChild(ctrl);
+
+    if (d.bill) bills.appendChild(row);
+    else coins.appendChild(row);
+  }
+}
+
+function updateInputTotal() {
+  var total = 0;
+  for (var i = 0; i < DENOMS.length; i++) {
+    var d = DENOMS[i];
+    var sub = inputCounts[d.v] * d.v;
+    total += sub;
+    var el = document.getElementById('dsub-' + d.v);
+    if (el) el.textContent = inputCounts[d.v] > 0 ? '¥' + sub.toLocaleString() : '¥0';
+  }
+  document.getElementById('input-total').textContent = '¥' + total.toLocaleString();
+}
+
+function resetInputCounts() {
+  if (!confirm('入力中の金種をすべてリセットしますか？')) return;
+  for (var i = 0; i < DENOMS.length; i++) {
+    inputCounts[DENOMS[i].v] = 0;
+    var inp = document.getElementById('qinp-' + DENOMS[i].v);
+    if (inp) inp.value = 0;
+  }
+  updateInputTotal();
+}
+
+function saveEntry() {
+  var ci = currentInput.ci;
+  var gi = currentInput.gi;
+  var total = 0;
+  for (var i = 0; i < DENOMS.length; i++) total += inputCounts[DENOMS[i].v] * DENOMS[i].v;
+  var snapshot = {};
+  for (var i = 0; i < DENOMS.length; i++) {
+    var d = DENOMS[i];
+    if (inputCounts[d.v] > 0) snapshot[d.v] = {label: d.label, count: inputCounts[d.v], sub: inputCounts[d.v] * d.v};
+  }
+  setRecord(ci, gi, {v: total, snapshot: snapshot});
+  closeInput();
+  var page = document.getElementById('page-' + ci);
+  if (page) page.innerHTML = buildPageHTML(ci);
+  showToast(groups[gi] + 'を記録しました');
+}
+
+function openSettings() {
+  var cf = document.getElementById('cat-fields');
+  cf.innerHTML = '';
+  for (var i = 0; i < cats.length; i++) {
+    cf.innerHTML += '<div class="sfield"><label>項目 ' + (i + 1) + '</label><input class="sinp" id="cat-inp-' + i + '" value="' + cats[i] + '" placeholder="例：区費"></div>';
+  }
+  var gf = document.getElementById('group-fields');
+  gf.innerHTML = '';
+  for (var i = 0; i < groups.length; i++) {
+    gf.innerHTML += '<div class="sfield"><label>' + GROUP_NUMS[i] + '組</label><input class="sinp" id="grp-inp-' + i + '" value="' + groups[i] + '" placeholder="' + GROUP_NUMS[i] + '組"></div>';
+  }
+  document.getElementById('settings-screen').classList.add('open');
+}
+
+function closeSettings() {
+  document.getElementById('settings-screen').classList.remove('open');
+}
+
+function saveSettings() {
+  var newCats = [];
+  for (var i = 0; i < cats.length; i++) {
+    var v = document.getElementById('cat-inp-' + i).value.trim();
+    newCats.push(v || cats[i]);
+  }
+  var newGroups = [];
+  for (var i = 0; i < groups.length; i++) {
+    var v = document.getElementById('grp-inp-' + i).value.trim();
+    newGroups.push(v || groups[i]);
+  }
+  cats = newCats;
+  groups = newGroups;
+  saveData('cats', cats);
+  saveData('groups', groups);
+  closeSettings();
+  buildAll();
+  showToast('設定を保存しました');
+}
+
+function resetAllRecords() {
+  if (!confirm('すべての集金データを削除します。\nこの操作は取り消せません。\n本当によろしいですか？')) return;
+  records = {};
+  saveData('records', records);
+  closeSettings();
+  buildAll();
+  showToast('すべてのデータを削除しました');
+}
+
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, 2200);
+}
+
+buildAll();
+</script>
+</body>
+</html>
